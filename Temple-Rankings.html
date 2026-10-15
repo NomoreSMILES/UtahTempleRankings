@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Temple Rankings | Utah Temple Rankings</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="shortcut icon" href="Images/AngelMoroni.ico" type="image/x-icon">
+    <script src="script.js" defer></script>
+    <style>
+        :root {
+            --ink: #243447;
+            --muted: #667085;
+            --line: #d9e2ec;
+            --surface: #ffffff;
+            --surface-alt: #f5f8fb;
+            --accent: #2c6e91;
+            --accent-dark: #1f4f69;
+            --gold: #c58b25;
+        }
+
+        * { box-sizing: border-box; }
+
+        body.modal-open { overflow: hidden; }
+
+        body {
+            margin: 0;
+            color: var(--ink);
+            background: #eef3f7;
+            font-family: Georgia, "Times New Roman", serif;
+        }
+
+        main {
+            width: min(1180px, calc(100% - 2rem));
+            margin: 0 auto;
+            padding: 2rem 0 4rem;
+        }
+
+        .page-header {
+            margin-bottom: 1.25rem;
+            text-align: center;
+        }
+
+        h1, h2, h3, p { margin-top: 0; }
+
+        .page-header h1 {
+            margin-bottom: .5rem;
+            color: var(--accent-dark);
+            font-size: clamp(2rem, 5vw, 3.25rem);
+        }
+
+        .page-header p {
+            max-width: 780px;
+            margin: 0 auto;
+            color: var(--muted);
+            line-height: 1.55;
+        }
+
+        .panel {
+            margin-bottom: 1.25rem;
+            padding: 1.25rem;
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            background: var(--surface);
+            box-shadow: 0 5px 18px rgba(36, 52, 71, .06);
+        }
+
+        .panel h2 {
+            margin-bottom: .85rem;
+            font-size: 1.35rem;
+        }
+
+        .formula-note {
+            margin-bottom: 1rem;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        .weight-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .weight-table th,
+        .weight-table td {
+            padding: .55rem .65rem;
+            border-bottom: 1px solid var(--line);
+            text-align: left;
+        }
+
+        .weight-table th:last-child,
+        .weight-table td:last-child { text-align: right; }
+
+        .weight-table tr:last-child td { border-bottom: 0; }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: end;
+            gap: .85rem 1rem;
+        }
+
+        .control-field {
+            display: grid;
+            gap: .35rem;
+            min-width: 230px;
+        }
+
+        label { font-weight: 700; }
+
+        select,
+        input[type="number"] {
+            min-height: 2.2rem;
+            padding: .35rem .5rem;
+            border: 1px solid #b7c6d4;
+            border-radius: 7px;
+            background: #fff;
+            color: var(--ink);
+            font: inherit;
+        }
+
+        button {
+            min-height: 2.2rem;
+            padding: .4rem .8rem;
+            border: 1px solid var(--accent-dark);
+            border-radius: 7px;
+            background: var(--accent);
+            color: #fff;
+            cursor: pointer;
+            font: inherit;
+            font-weight: 700;
+        }
+
+        button:hover { background: var(--accent-dark); }
+
+        .summary {
+            margin: 1rem 0;
+            color: var(--muted);
+            font-weight: 700;
+        }
+
+        #TempleRankings {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .temple-card {
+            position: relative;
+            display: grid;
+            grid-template-columns: 112px 1fr auto;
+            align-items: center;
+            gap: 1rem;
+            width: 100%;
+            padding: .8rem 1rem .8rem .8rem;
+            overflow: hidden;
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            background: var(--surface);
+            box-shadow: 0 5px 18px rgba(36, 52, 71, .06);
+            color: var(--ink);
+            cursor: pointer;
+            text-align: left;
+            transition: transform .28s ease, box-shadow .28s ease, border-color .28s ease;
+            animation: rise-in .55s both;
+        }
+
+        .temple-card:nth-child(2n) { animation-delay: .04s; }
+        .temple-card:nth-child(3n) { animation-delay: .08s; }
+
+        .temple-card::after {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(110deg, transparent 35%, rgba(255, 255, 255, .52) 50%, transparent 65%);
+            content: "";
+            pointer-events: none;
+            transform: translateX(-120%);
+            transition: transform .7s ease;
+        }
+
+        .temple-card:hover,
+        .temple-card:focus-visible {
+            border-color: #82b2cc;
+            box-shadow: 0 16px 30px rgba(36, 52, 71, .14);
+            outline: none;
+            transform: translateY(-5px) scale(1.01);
+        }
+
+        .temple-card:hover::after,
+        .temple-card:focus-visible::after { transform: translateX(120%); }
+
+        .temple-card:active { transform: translateY(-1px) scale(.995); }
+
+        .temple-thumb,
+        .temple-thumb-placeholder {
+            width: 112px;
+            height: 112px;
+            border-radius: 12px;
+            object-fit: cover;
+            background: #dbe7ef;
+        }
+
+        .temple-thumb-placeholder {
+            display: grid;
+            place-items: center;
+            padding: .65rem;
+            color: var(--muted);
+            font-size: .8rem;
+            text-align: center;
+        }
+
+        .temple-image,
+        .temple-image-placeholder {
+            width: 100%;
+            min-height: 190px;
+            height: 100%;
+            object-fit: cover;
+            background: #dbe7ef;
+        }
+
+        .temple-image-placeholder {
+            display: grid;
+            place-items: center;
+            padding: 1rem;
+            color: var(--muted);
+            text-align: center;
+        }
+
+        .temple-card-content { min-width: 0; }
+
+        .temple-heading {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: start;
+            justify-content: space-between;
+            gap: .65rem;
+        }
+
+        .temple-heading h2 {
+            margin-bottom: .25rem;
+            font-size: clamp(1.25rem, 3vw, 1.7rem);
+        }
+
+        .temple-meta {
+            margin-bottom: .8rem;
+            color: var(--muted);
+            line-height: 1.45;
+        }
+
+        .rank-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: .3rem;
+            padding: .35rem .6rem;
+            border-radius: 999px;
+            background: #edf4f8;
+            color: var(--accent-dark);
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .status {
+            display: inline-block;
+            margin-left: .45rem;
+            padding: .2rem .45rem;
+            border-radius: 999px;
+            background: #f2f4f7;
+            color: var(--muted);
+            font-size: .82rem;
+            font-weight: 700;
+        }
+
+        .overall-score {
+            color: var(--gold);
+            font-size: 1.8rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .score-strip {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .45rem .65rem;
+            margin-top: .55rem;
+        }
+
+        .score-pill {
+            padding: .3rem .5rem;
+            border: 1px solid var(--line);
+            border-radius: 7px;
+            background: var(--surface-alt);
+            font-size: .9rem;
+        }
+
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: .75rem;
+        }
+
+        .score-field {
+            display: grid;
+            gap: .3rem;
+            color: var(--ink);
+            font-size: .95rem;
+        }
+
+        .score-field small {
+            color: var(--muted);
+            font-weight: 400;
+        }
+
+        .preference-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: end;
+            gap: 1rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--line);
+        }
+
+        .checkbox-field {
+            display: flex;
+            align-items: center;
+            gap: .45rem;
+            min-height: 2.2rem;
+        }
+
+        .preference-note {
+            margin: .75rem 0 0;
+            color: var(--muted);
+            font-size: .9rem;
+        }
+
+        .open-hint {
+            color: var(--accent);
+            font-size: .88rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .modal {
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            display: grid;
+            place-items: center;
+            padding: 1rem;
+            background: rgba(20, 35, 49, .58);
+            backdrop-filter: blur(8px);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .3s ease;
+        }
+
+        .modal.is-open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-dialog {
+            position: relative;
+            display: grid;
+            grid-template-rows: auto 1fr auto;
+            width: min(1120px, 100%);
+            max-height: min(900px, calc(100vh - 2rem));
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, .65);
+            border-radius: 22px;
+            background: var(--surface);
+            box-shadow: 0 30px 80px rgba(8, 23, 35, .35);
+            transform: translateY(28px) scale(.94);
+            transition: transform .45s cubic-bezier(.2, .9, .25, 1.2);
+        }
+
+        .modal.is-open .modal-dialog { transform: translateY(0) scale(1); }
+
+        .modal-topbar {
+            display: flex;
+            align-items: start;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 1.35rem 1.5rem 1rem;
+            background: linear-gradient(135deg, #fafdff, #edf5f8);
+        }
+
+        .modal-topbar h2 {
+            margin-bottom: .3rem;
+            color: var(--accent-dark);
+            font-size: clamp(1.6rem, 4vw, 2.6rem);
+        }
+
+        .modal-close {
+            display: grid;
+            flex: 0 0 auto;
+            place-items: center;
+            width: 2.5rem;
+            min-height: 2.5rem;
+            padding: 0;
+            border: 1px solid var(--line);
+            border-radius: 50%;
+            background: #fff;
+            color: var(--accent-dark);
+            font-size: 1.35rem;
+            line-height: 1;
+        }
+
+        .modal-close:hover {
+            background: var(--accent-dark);
+            color: #fff;
+            transform: rotate(90deg);
+        }
+
+        .modal-body {
+            display: grid;
+            grid-template-columns: minmax(330px, .95fr) minmax(330px, 1.05fr);
+            gap: 1.35rem;
+            overflow: auto;
+            padding: 1.35rem 1.5rem;
+            background-color: #fbfdff;
+            background-image: radial-gradient(#dbe7ef 1px, transparent 1px);
+            background-size: 9px 9px;
+        }
+
+        .modal-section-title {
+            margin-bottom: .8rem;
+            color: var(--accent-dark);
+            font-size: 1.15rem;
+        }
+
+        .modal-score-list {
+            display: grid;
+            gap: .85rem;
+        }
+
+        .modal-rating-row {
+            display: grid;
+            grid-template-columns: 82px 1fr;
+            align-items: center;
+            gap: .85rem;
+            padding: .65rem;
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            background: linear-gradient(105deg, #fff, #f7fafc);
+            animation: slide-in .5s both;
+        }
+
+        .modal-rating-row:nth-child(2) { animation-delay: .04s; }
+        .modal-rating-row:nth-child(3) { animation-delay: .08s; }
+        .modal-rating-row:nth-child(4) { animation-delay: .12s; }
+        .modal-rating-row:nth-child(5) { animation-delay: .16s; }
+        .modal-rating-row:nth-child(6) { animation-delay: .20s; }
+        .modal-rating-row:nth-child(7) { animation-delay: .24s; }
+        .modal-rating-row:nth-child(8) { animation-delay: .28s; }
+
+        .rating-ring {
+            position: relative;
+            display: grid;
+            place-items: center;
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: conic-gradient(#4c80f1 calc(var(--score) * 10%), #e5edf5 0);
+            box-shadow: 0 5px 12px rgba(76, 128, 241, .2);
+            animation: ring-pop .8s cubic-bezier(.2, .9, .25, 1.3) both;
+        }
+
+        .rating-ring::after {
+            position: absolute;
+            inset: 8px;
+            border-radius: 50%;
+            background: #fff;
+            content: "";
+        }
+
+        .rating-ring span {
+            position: relative;
+            z-index: 1;
+            color: var(--accent-dark);
+            font-size: 1.15rem;
+            font-weight: 700;
+        }
+
+        .ring-score {
+            display: grid;
+            gap: .15rem;
+            justify-items: center;
+            margin-top: .3rem;
+            color: var(--muted);
+            font-size: .72rem;
+            font-weight: 700;
+        }
+
+        .modal-score-input {
+            width: 70px;
+            min-height: 1.65rem;
+            padding: .15rem .25rem;
+            text-align: center;
+        }
+
+        .rating-copy { min-width: 0; }
+
+        .rating-label {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: .5rem;
+            margin-bottom: .35rem;
+            font-weight: 700;
+        }
+
+        .rating-label small {
+            color: var(--muted);
+            font-weight: 400;
+            white-space: nowrap;
+        }
+
+        .rating-note,
+        .note-editor {
+            width: 100%;
+            margin: 0;
+            color: var(--ink);
+            font: inherit;
+            line-height: 1.35;
+        }
+
+        .note-editor {
+            min-height: 3.2rem;
+            resize: vertical;
+            padding: .45rem .55rem;
+            border: 1px solid #c7d5e0;
+            border-radius: 8px;
+            background: #fff;
+        }
+
+        .note-editor:focus { border-color: var(--accent); outline: 3px solid rgba(44, 110, 145, .16); }
+
+        .modal-photo-stack {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: .7rem;
+            align-content: start;
+        }
+
+        .modal-photo,
+        .modal-photo-placeholder {
+            width: 100%;
+            min-height: 145px;
+            border-radius: 12px;
+            object-fit: cover;
+            background: #dbe7ef;
+            box-shadow: 0 7px 16px rgba(36, 52, 71, .12);
+            transition: transform .3s ease, filter .3s ease;
+        }
+
+        .modal-photo:first-child,
+        .modal-photo-placeholder:first-child { grid-column: 1 / -1; min-height: 205px; }
+
+        .modal-photo:hover { filter: saturate(1.12); transform: scale(1.025) rotate(.35deg); }
+
+        .modal-photo-placeholder {
+            display: grid;
+            place-items: center;
+            color: var(--muted);
+            text-align: center;
+        }
+
+        .modal-footer {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: .85rem;
+            padding: .9rem 1.5rem 1.2rem;
+            border-top: 1px solid var(--line);
+            background: #fbfdff;
+        }
+
+        .modal-preferences {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: .9rem;
+        }
+
+        .modal-preferences .control-field { min-width: 170px; }
+
+        .modal-overall {
+            color: var(--gold);
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        @keyframes rise-in {
+            from { opacity: 0; transform: translateY(18px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slide-in {
+            from { opacity: 0; transform: translateX(-12px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes ring-pop {
+            from { opacity: 0; transform: scale(.4) rotate(-35deg); }
+            to { opacity: 1; transform: scale(1) rotate(0); }
+        }
+
+        @media (max-width: 720px) {
+            .temple-card { grid-template-columns: 78px 1fr; padding: .65rem; }
+            .temple-thumb,
+            .temple-thumb-placeholder { width: 78px; height: 78px; }
+            .open-hint { display: none; }
+            .temple-card .overall-score { grid-column: 2; font-size: 1.45rem; }
+            .modal-body { grid-template-columns: 1fr; padding: 1rem; }
+            .modal-topbar { padding: 1rem 1rem .85rem; }
+            .modal-footer { padding: .8rem 1rem 1rem; }
+            .modal-photo-stack { order: -1; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                scroll-behavior: auto !important;
+                animation-duration: .01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: .01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-inner">
+            <a class="brand" href="index.html"><img src="Images/AngelMoroni.png" alt="" class="brand-mark"><span>Utah Temple Ranking</span></a>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="temple-list.html">Temple List</a></li>
+                <li><a href="Temple-Rankings.html" aria-current="page">Rankings</a></li>
+                <li><a href="MapofTemples.html">Map</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main>
+        <header class="page-header">
+            <h1>Utah Temple Rankings</h1>
+            <p>Rate each temple from 0–10. The list automatically ranks temples from highest to lowest using the weighted overall score. Your favorite and “Would Visit Again?” choices are personal preferences and never change the main score.</p>
+        </header>
+
+        <section class="panel" aria-labelledby="scoring-heading">
+            <h2 id="scoring-heading">Scoring formula</h2>
+            <p class="formula-note">Every category is scored from 0 to 10. The implementation uses the detailed eight-category formula from your example, which totals 100%.</p>
+            <table class="weight-table">
+                <thead>
+                    <tr><th>Category</th><th>Weight</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>🏛️ Architecture</td><td class="golden">25%</td></tr>
+                    <tr><td>🌳 Grounds</td><td class="golden">20%</td></tr>
+                    <tr><td>✨ Overall Experience</td><td class="golden">20%</td></tr>
+                    <tr><td>📜 Historical Significance</td><td class="golden">10%</td></tr>
+                    <tr><td>⭐ Uniqueness</td><td class="golden">25%</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="panel" aria-label="Ranking controls">
+            <div class="controls">
+                <label class="control-field" for="sortBy">
+                    Sort by
+                    <select id="sortBy"></select>
+                </label>
+                <button id="resetRatings" type="button">Reset saved ratings</button>
+            </div>
+            <p class="preference-note golden">Ratings are saved in this browser. The score values can also be edited directly in the <code>temples</code> array in <code>script.js</code>.</p>
+        </section>
+
+        <p id="rankingSummary" class="summary" aria-live="polite"></p>
+        <section id="TempleRankings" aria-label="Ranked Utah temples"></section>
+    </main>
+
+    <div id="templeModal" class="modal" aria-hidden="true" role="presentation">
+        <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="modalTempleName">
+            <div class="modal-topbar">
+                <div>
+                    <h2 id="modalTempleName">Temple Details</h2>
+                    <p id="modalTempleMeta" class="temple-meta"></p>
+                </div>
+                <button id="closeTempleModal" class="modal-close" type="button" aria-label="Close temple details">×</button>
+            </div>
+            <div id="modalContent" class="modal-body"></div>
+            <div id="modalFooter" class="modal-footer"></div>
+        </div>
+    </div>
+</body>
+<footer class="site-footer">
+  <div class="footer-container">
+    <!-- Column 1: About -->
+    <div class="footer-column">
+      <h3>About Us</h3>
+      <p>I am solo developer with a desire to grow my understanding of the HTML, CSS and Javascript coding languages. <br> Please enjoy this website</p>
+    </div>
+
+    <!-- Column 2: Quick Links -->
+    <div class="footer-column">
+      <h3>Quick Links</h3>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="temple-list.html">Temple List</a></li>
+        <li><a href="Temple-Rankings.html">Rankings</a></li>
+        <li><a href="MapofTemples.html">Map</a></li>
+      </ul>
+    </div>
+
+    <!-- Column 3: Contact Info -->
+    <div class="footer-column">
+      <h3>Contact</h3>
+      <p>Email: nomoresmiles08@gmail.com</p>
+    </div>
+  </div>
+
+  <!-- Bottom Bar -->
+  <div class="footer-bottom golden">
+    <p>&copy; 2026 UtahTempleRankings. All rights reserved.</p>
+  </div>
+</footer>
+</html>

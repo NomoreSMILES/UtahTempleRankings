@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#1f4f69">
+    <title>Map | Utah Temple Rankings</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+    <link rel="shortcut icon" href="Images/AngelMoroni.ico" type="image/x-icon">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+</head>
+<body>
+    <nav>
+        <div class="nav-inner">
+            <a class="brand" href="index.html"><img src="Images/AngelMoroni.png" alt="" class="brand-mark"><span>Utah Temple Ranking</span></a>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="temple-list.html">Temple List</a></li>
+                <li><a href="Temple-Rankings.html">Rankings</a></li>
+                <li><a href="MapofTemples.html" aria-current="page">Map</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="site-main">
+        <header class="page-header">
+            <p class="eyebrow">Find every location</p>
+            <h1>Map of Utah Temples</h1>
+            <p>Tap a marker or choose a temple from the list. Add photos from your device to create a private temple journal saved in this browser.</p>
+        </header>
+
+        <section class="map-workspace" aria-label="Interactive Utah temple map">
+            <div class="map-card map-stage">
+                <div class="map-stage-toolbar">
+                    <div>
+                        <h2>Explore the map</h2>
+                    <p>Normal markers are unrated, green markers have a score, and 🏆 marks the current highest-rated temple.</p>
+                    </div>
+                    <label class="map-search" for="mapSearch">Find a temple
+                        <input id="mapSearch" type="search" placeholder="Search by name or city" autocomplete="off">
+                    </label>
+                </div>
+                <div id="map" aria-label="Interactive map of Utah temples"></div>
+                <div class="map-legend" aria-label="Map legend"><span class="legend-item"><span class="legend-dot"></span>Unrated</span><span class="legend-item"><span class="legend-dot green"></span>Ranked</span><span class="legend-item"><span class="legend-trophy">🏆</span>Highest rated</span></div>
+                <p class="map-mobile-note">On a phone? Choose a temple from the list below to move the map and open its details.</p>
+            </div>
+
+            <aside class="map-sidebar" aria-label="Selected temple and photo journal">
+                <section class="map-sidebar-card selected-temple-card">
+                    <span id="selectedStatus" class="selected-status">Not ranked yet</span>
+                    <h2 id="selectedTempleName">Salt Lake Temple</h2>
+                    <p id="selectedTempleCity">Salt Lake City, Utah</p>
+                </section>
+
+                <section class="map-sidebar-card photo-panel">
+                    <h3>Pictures</h3>
+                    <p>Add personal journal photos for the selected temple. They also appear in that temple’s Pictures section on the Rankings page.</p>
+                    <label class="upload-button" for="photoInput">＋ Add photos
+                        <input id="photoInput" type="file" accept="image/*" multiple>
+                    </label>
+                    <div id="photoGallery" class="photo-gallery" aria-live="polite"></div>
+                    <p id="photoMessage" class="photo-message"></p>
+                </section>
+
+                <section class="map-sidebar-card temple-list-panel">
+                    <h3>Temple locations</h3>
+                    <div id="templeList" class="temple-list"></div>
+                </section>
+            </aside>
+        </section>
+    </main>
+
+    <script>
+        const templeLocations = [
+            { id: 'salt-lake', coordinates: [40.770468, -111.891958], name: 'Salt Lake Temple', city: 'Salt Lake City', green: false },
+            { id: 'bountiful', coordinates: [40.882853, -111.846812], name: 'Bountiful Utah Temple', city: 'Bountiful', green: false },
+            { id: 'brigham-city', coordinates: [41.505376, -112.016592], name: 'Brigham City Utah Temple', city: 'Brigham City', green: false },
+            { id: 'cedar-city', coordinates: [37.671734, -113.096271], name: 'Cedar City Utah Temple', city: 'Cedar City', green: false },
+            { id: 'deseret-peak', coordinates: [40.57266168, -112.313970], name: 'Deseret Peak Utah Temple', city: 'Tooele', green: false },
+            { id: 'draper', coordinates: [40.495893, -111.840748], name: 'Draper Utah Temple', city: 'Draper', green: true },
+            { id: 'ephraim', coordinates: [39.36353987, -111.576000], name: 'Ephraim Utah Temple', city: 'Ephraim', green: false },
+            { id: 'heber-valley', coordinates: [40.50663270, -111.389452], name: 'Heber Valley Utah Temple', city: 'Heber City', green: false },
+            { id: 'jordan-river', coordinates: [40.566354, -111.931417], name: 'Jordan River Utah Temple', city: 'South Jordan', green: true },
+            { id: 'layton', coordinates: [41.061699, -111.938379], name: 'Layton Utah Temple', city: 'Layton', green: false },
+            { id: 'lehi', coordinates: [40.4387350714, -111.8538992246], name: 'Lehi Utah Temple', city: 'Lehi', green: false },
+            { id: 'lindon', coordinates: [40.33730438, -111.69538380], name: 'Lindon Utah Temple', city: 'Lindon', green: false },
+            { id: 'logan', coordinates: [41.734161, -111.827943], name: 'Logan Utah Temple', city: 'Logan', green: false },
+            { id: 'manti', coordinates: [39.272906, -111.633760], name: 'Manti Utah Temple', city: 'Manti', green: false },
+            { id: 'monticello', coordinates: [37.877917, -109.347066], name: 'Monticello Utah Temple', city: 'Monticello', green: false },
+            { id: 'mount-timpanogos', coordinates: [40.393166, -111.770509], name: 'Mount Timpanogos Utah Temple', city: 'American Fork', green: true },
+            { id: 'ogden', coordinates: [41.227786, -111.971506], name: 'Ogden Utah Temple', city: 'Ogden', green: false },
+            { id: 'oquirrh-mountain', coordinates: [40.551145, -111.987510], name: 'Oquirrh Mountain Utah Temple', city: 'South Jordan', green: true },
+            { id: 'orem', coordinates: [40.270755, -111.720916], name: 'Orem Utah Temple', city: 'Orem', green: true },
+            { id: 'payson', coordinates: [40.019258, -111.749175], name: 'Payson Utah Temple', city: 'Payson', green: false },
+            { id: 'provo-city-center', coordinates: [40.232667, -111.659299], name: 'Provo City Center Temple', city: 'Provo', green: true },
+            { id: 'provo-rock-canyon', coordinates: [40.26347161, -111.640500], name: 'Provo Utah Rock Canyon Temple', city: 'Provo', green: false },
+            { id: 'red-cliffs', coordinates: [37.082184, -113.519741], name: 'Red Cliffs Utah Temple', city: 'St. George', green: true },
+            { id: 'saratoga-springs', coordinates: [40.34422619, -111.932607], name: 'Saratoga Springs Utah Temple', city: 'Saratoga Springs', green: true },
+            { id: 'smithfield', coordinates: [41.84012916, -111.852673], name: 'Smithfield Utah Temple', city: 'Smithfield', green: false },
+            { id: 'spanish-fork', coordinates: [40.10697598, -111.614070], name: 'Spanish Fork Utah Temple', city: 'Spanish Fork', green: false },
+            { id: 'st-george', coordinates: [37.100535, -113.578041], name: 'St. George Utah Temple', city: 'St. George', green: true },
+            { id: 'syracuse', coordinates: [41.09907006, -112.076303], name: 'Syracuse Utah Temple', city: 'Syracuse', green: false },
+            { id: 'taylorsville', coordinates: [40.66671159, -111.954110], name: 'Taylorsville Utah Temple', city: 'Taylorsville', green: true },
+            { id: 'vernal', coordinates: [40.453205, -109.537413], name: 'Vernal Utah Temple', city: 'Vernal', green: false },
+            { id: 'west-jordan', coordinates: [40.62038003, -112.068361], name: 'West Jordan Utah Temple', city: 'West Jordan', green: false }
+        ];
+
+        const map = L.map('map', { zoomControl: false }).setView([39.77068197474584, -111.59943046118738], 7.5);
+        L.control.zoom({ position: 'bottomright' }).addTo(map);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors', maxZoom: 18 }).addTo(map);
+
+        const templeIcon = L.icon({ iconUrl: 'Images/TempleVector.png', iconSize: [38, 68], iconAnchor: [19, 64], popupAnchor: [0, -58] });
+        const greenTempleIcon = L.icon({ iconUrl: 'Images/GreenTempleVector.png', iconSize: [38, 68], iconAnchor: [19, 64], popupAnchor: [0, -58] });
+        const rankingStorageKey = 'utah-temple-ranking-ratings-v1';
+        const rankingWeights = { architecture: .25, grounds: .20, experience: .20, location: .10, history: .10, photography: .05, nightAppearance: .05, uniqueness: .05 };
+        const markers = new Map();
+        let selectedTempleId = templeLocations[0].id;
+        let savedPhotoUrls = [];
+        let rankingState = new Map();
+        let highestRatedTempleId = null;
+        let photoDbPromise = null;
+        let photoRenderToken = 0;
+
+        templeLocations.forEach((temple) => {
+            const marker = L.marker(temple.coordinates, { icon: templeIcon }).addTo(map);
+            marker.bindPopup(`<div class="map-popup-card"><strong>${temple.name}</strong><span>${temple.city}, Utah</span><button class="map-popup-action" type="button" data-popup-temple="${temple.id}">Open temple journal</button></div>`);
+            marker.on('click', () => selectTemple(temple.id, false));
+            marker.on('popupopen', () => {
+                const button = document.querySelector(`[data-popup-temple="${temple.id}"]`);
+                if (button) button.addEventListener('click', () => selectTemple(temple.id, false));
+            });
+            markers.set(temple.id, marker);
+        });
+
+        function selectedTemple() { return templeLocations.find((temple) => temple.id === selectedTempleId) || templeLocations[0]; }
+
+        function readRankingState() {
+            rankingState = new Map();
+            highestRatedTempleId = null;
+            let highestScore = -1;
+            try {
+                const saved = JSON.parse(localStorage.getItem(rankingStorageKey) || '{}');
+                templeLocations.forEach((temple) => {
+                    const savedTemple = saved[temple.id];
+                    const scores = savedTemple && savedTemple.scores ? savedTemple.scores : {};
+                    const ranked = Object.values(scores).some((value) => Number(value) > 0);
+                    const overall = Object.entries(rankingWeights).reduce((total, [category, weight]) => total + (Number(scores[category]) || 0) * weight, 0);
+                    rankingState.set(temple.id, { ranked, overall });
+                    if (ranked && overall > highestScore) {
+                        highestScore = overall;
+                        highestRatedTempleId = temple.id;
+                    }
+                });
+            } catch (error) {
+                console.warn('Saved ranking data could not be read.', error);
+            }
+        }
+
+        function trophyIcon() {
+            return L.divIcon({ className: '', html: '<span class="map-trophy-marker"><img src="Images/GreenTempleVector.png" alt=""><span>🏆</span></span>', iconSize: [48, 76], iconAnchor: [24, 70], popupAnchor: [0, -64] });
+        }
+
+        function refreshMarkerStyles() {
+            readRankingState();
+            templeLocations.forEach((temple) => {
+                const state = rankingState.get(temple.id);
+                const icon = temple.id === highestRatedTempleId ? trophyIcon() : (state && state.ranked ? greenTempleIcon : templeIcon);
+                markers.get(temple.id).setIcon(icon);
+            });
+            updateSelectedTemple();
+            renderTempleList(document.getElementById('mapSearch').value);
+        }
+
+        function renderTempleList(filter = '') {
+            const term = filter.trim().toLowerCase();
+            const list = document.getElementById('templeList');
+            const visible = templeLocations.filter((temple) => `${temple.name} ${temple.city}`.toLowerCase().includes(term));
+            list.innerHTML = visible.map((temple) => {
+                const state = rankingState.get(temple.id) || { ranked: false, overall: 0 };
+                const trophy = temple.id === highestRatedTempleId ? ' 🏆' : '';
+                const score = state.ranked ? `<span class="map-score">${state.overall.toFixed(2)}${trophy}</span>` : '<small>Unrated</small>';
+                return `<button class="temple-list-button${temple.id === selectedTempleId ? ' is-selected' : ''}" type="button" data-temple-id="${temple.id}"><span>${temple.name}</span>${score}</button>`;
+            }).join('') || '<p class="photo-empty">No temples match that search.</p>';
+            list.querySelectorAll('[data-temple-id]').forEach((button) => button.addEventListener('click', () => selectTemple(button.dataset.templeId, true)));
+        }
+
+        function updateSelectedTemple() {
+            const temple = selectedTemple();
+            document.getElementById('selectedTempleName').textContent = temple.name;
+            document.getElementById('selectedTempleCity').textContent = `${temple.city}, Utah`;
+            const state = rankingState.get(temple.id) || { ranked: false, overall: 0 };
+            const status = document.getElementById('selectedStatus');
+            status.classList.toggle('is-ranked', state.ranked && temple.id !== highestRatedTempleId);
+            status.classList.toggle('is-champion', temple.id === highestRatedTempleId);
+            status.textContent = temple.id === highestRatedTempleId ? `🏆 Highest rated · ${state.overall.toFixed(2)} / 10` : state.ranked ? `Ranked · ${state.overall.toFixed(2)} / 10` : 'Not ranked yet';
+            document.querySelectorAll('.temple-list-button').forEach((button) => button.classList.toggle('is-selected', button.dataset.templeId === temple.id));
+        }
+
+        function setPhotoMessage(message) { document.getElementById('photoMessage').textContent = message; }
+
+        function openPhotoDb() {
+            if (photoDbPromise) return photoDbPromise;
+            photoDbPromise = new Promise((resolve, reject) => {
+                if (!window.indexedDB) { reject(new Error('This browser does not support local photo storage.')); return; }
+                const request = indexedDB.open('utah-temple-photo-journal', 1);
+                request.onupgradeneeded = () => {
+                    const database = request.result;
+                    const store = database.objectStoreNames.contains('photos')
+                        ? request.transaction.objectStore('photos')
+                        : database.createObjectStore('photos', { keyPath: 'id' });
+                    if (!store.indexNames.contains('templeId')) store.createIndex('templeId', 'templeId');
+                };
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error || new Error('Could not open local photo storage.'));
+            });
+            return photoDbPromise;
+        }
+
+        async function getPhotos(templeId) {
+            const db = await openPhotoDb();
+            return new Promise((resolve, reject) => {
+                const request = db.transaction('photos', 'readonly').objectStore('photos').index('templeId').getAll(templeId);
+                request.onsuccess = () => resolve(request.result.sort((a, b) => b.createdAt - a.createdAt));
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        async function savePhoto(templeId, file) {
+            const db = await openPhotoDb();
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction('photos', 'readwrite');
+                transaction.objectStore('photos').put({ id: `${templeId}-${Date.now()}-${Math.random().toString(16).slice(2)}`, templeId, name: file.name, type: file.type, blob: file, createdAt: Date.now() });
+                transaction.oncomplete = resolve;
+                transaction.onerror = () => reject(transaction.error);
+            });
+        }
+
+        async function removePhoto(photoId) {
+            const db = await openPhotoDb();
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction('photos', 'readwrite');
+                transaction.objectStore('photos').delete(photoId);
+                transaction.oncomplete = resolve;
+                transaction.onerror = () => reject(transaction.error);
+            });
+        }
+
+        async function renderPhotos() {
+            const renderToken = ++photoRenderToken;
+            savedPhotoUrls.forEach((url) => URL.revokeObjectURL(url));
+            savedPhotoUrls = [];
+            const gallery = document.getElementById('photoGallery');
+            gallery.innerHTML = '';
+            try {
+                const photos = await getPhotos(selectedTempleId);
+                if (renderToken !== photoRenderToken) return;
+                if (!photos.length) { gallery.innerHTML = '<p class="photo-empty">No photos saved for this temple yet.</p>'; return; }
+                photos.forEach((photo) => {
+                    const url = URL.createObjectURL(photo.blob);
+                    savedPhotoUrls.push(url);
+                    const figure = document.createElement('figure');
+                    figure.className = 'saved-photo';
+                    figure.innerHTML = `<img src="${url}" alt="${photo.name.replaceAll('"', '&quot;')}"><button class="delete-photo" type="button" aria-label="Delete ${photo.name.replaceAll('"', '&quot;')}">×</button>`;
+                    figure.querySelector('button').addEventListener('click', async () => { await removePhoto(photo.id); setPhotoMessage('Photo removed from this browser.'); renderPhotos(); });
+                    gallery.appendChild(figure);
+                });
+            } catch (error) {
+                gallery.innerHTML = '<p class="photo-empty">Local photo storage is unavailable in this browser.</p>';
+                setPhotoMessage(error.message);
+            }
+        }
+
+        async function selectTemple(templeId, moveMap) {
+            if (!templeLocations.some((temple) => temple.id === templeId)) return;
+            selectedTempleId = templeId;
+            const temple = selectedTemple();
+            updateSelectedTemple();
+            setPhotoMessage('');
+            if (moveMap) map.setView(temple.coordinates, Math.max(map.getZoom(), 9), { animate: true });
+            markers.get(templeId).openPopup();
+            await renderPhotos();
+        }
+
+        document.getElementById('mapSearch').addEventListener('input', (event) => renderTempleList(event.target.value));
+        document.getElementById('photoInput').addEventListener('change', async (event) => {
+            const files = [...event.target.files].filter((file) => file.type.startsWith('image/'));
+            if (!files.length) return;
+            if (files.some((file) => file.size > 8 * 1024 * 1024)) { setPhotoMessage('Please choose images smaller than 8 MB each.'); event.target.value = ''; return; }
+            try {
+                await Promise.all(files.map((file) => savePhoto(selectedTempleId, file)));
+                setPhotoMessage(`${files.length} photo${files.length === 1 ? '' : 's'} saved in this browser.`);
+                await renderPhotos();
+            } catch (error) { setPhotoMessage(error.message || 'The photos could not be saved.'); }
+            event.target.value = '';
+        });
+
+        window.addEventListener('storage', (event) => { if (event.key === rankingStorageKey) refreshMarkerStyles(); });
+        document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshMarkerStyles(); });
+
+        refreshMarkerStyles();
+        renderPhotos();
+    </script>
+</body>
+<footer class="site-footer">
+  <div class="footer-container">
+    <!-- Column 1: About -->
+    <div class="footer-column">
+      <h3>About Us</h3>
+      <p>I am solo developer with a desire to grow my understanding of the HTML, CSS and Javascript coding languages. <br> Please enjoy this website</p>
+    </div>
+
+    <!-- Column 2: Quick Links -->
+    <div class="footer-column">
+      <h3>Quick Links</h3>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="temple-list.html">Temple List</a></li>
+        <li><a href="Temple-Rankings.html">Rankings</a></li>
+        <li><a href="MapofTemples.html">Map</a></li>
+      </ul>
+    </div>
+
+    <!-- Column 3: Contact Info -->
+    <div class="footer-column">
+      <h3>Contact</h3>
+      <p>Email: nomoresmiles08@gmail.com</p>
+    </div>
+  </div>
+
+  <!-- Bottom Bar -->
+  <div class="footer-bottom golden">
+    <p>&copy; 2026 UtahTempleRankings. All rights reserved.</p>
+  </div>
+</footer>
+</html>
